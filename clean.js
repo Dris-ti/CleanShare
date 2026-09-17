@@ -54,7 +54,6 @@ async function copyText(text) {
   }
 }
 
-// Function to handle interactive button UI feedback states
 function updateButtonFeedback(button, state) {
   if (state === 'success') {
     button.innerHTML = `${ICONS.check} Copied`;
@@ -64,7 +63,6 @@ function updateButtonFeedback(button, state) {
     button.classList.add('btn-failed');
   }
 
-  // Reset back to default state after 2 seconds
   setTimeout(() => {
     button.innerHTML = `${ICONS.copy} Copy`;
     button.classList.remove('btn-success', 'btn-failed');
@@ -76,7 +74,32 @@ const output = document.getElementById('output');
 const status = document.getElementById('status');
 const copyBtn = document.getElementById('copy');
 
-// 1) Did we arrive from the Android share sheet?
+// Reusable handler for the single Copy button
+async function handleCopyAction() {
+  const textToCopy = output.value.trim() || input.value.trim();
+
+  if (!textToCopy) return;
+
+  const ok = await copyText(textToCopy);
+  if (ok) {
+    updateButtonFeedback(copyBtn, 'success');
+    status.textContent = 'Copied ✓ Paste it anywhere.';
+  } else {
+    updateButtonFeedback(copyBtn, 'failed');
+    status.textContent = 'Copy failed — tap copy or long-press';
+  }
+}
+
+// 1) Handle Copy button clicks
+copyBtn.addEventListener('click', handleCopyAction);
+
+// 2) Handle Manual Clean button click
+document.getElementById('clean').addEventListener('click', () => {
+  const cleaned = cleanUrl(input.value);
+  output.value = cleaned;
+});
+
+// 3) Handle incoming Share Target links (Android Share Sheet)
 const p = new URLSearchParams(location.search);
 const incoming = p.get('url') || p.get('text') || p.get('title') || '';
 
@@ -88,41 +111,13 @@ if (incoming) {
   (async () => {
     const ok = await copyText(cleaned);
     if (ok) {
+      updateButtonFeedback(copyBtn, 'success');
       status.textContent = 'Copied ✓ Paste it anywhere.';
       setTimeout(() => { try { window.close(); } catch {} }, 900);
     } else {
-      status.innerHTML = '';
-      const btn = document.createElement('button');
-      btn.textContent = 'Tap to copy';
-      btn.className = 'big-copy';
-      btn.addEventListener('click', async () => {
-        const done = await copyText(cleaned);
-        status.textContent = done ? 'Copied ✓' : 'Copy failed — long-press to select';
-        if (done) setTimeout(() => { try { window.close(); } catch {} }, 700);
-      });
-      status.appendChild(btn);
+      // If auto-copy fails (e.g., user gesture restriction), trigger standard feedback
+      updateButtonFeedback(copyBtn, 'failed');
+      status.textContent = 'Tap Copy button to copy link';
     }
   })();
-} else {
-  // Opened manually — show the paste-and-clean UI
-  status.textContent = '';
-  
-  document.getElementById('clean').addEventListener('click', () => {
-    const cleaned = cleanUrl(input.value);
-    output.value = cleaned;
-  });
-
-  copyBtn.addEventListener('click', async () => {
-    const textToCopy = output.value.trim() || input.value.trim();
-
-    // Do nothing if there's no result or text to copy
-    if (!textToCopy) return;
-
-    const ok = await copyText(textToCopy);
-    if (ok) {
-      updateButtonFeedback(copyBtn, 'success');
-    } else {
-      updateButtonFeedback(copyBtn, 'failed');
-    }
-  });
 }
