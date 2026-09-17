@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CleanShare</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>CleanShare</h1>
+      <textarea id="input" placeholder="Paste a link or share text..."></textarea>
+      <div class="buttons">
+        <button id="clean">Clean</button>
+        <button id="copy">Copy</button>
+      </div>
+      <output id="output"></output>
+    </main>
+    <script src="clean.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js");
+      }
+    </script>
+  </body>
+</html>
